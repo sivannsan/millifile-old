@@ -69,28 +69,28 @@ public final class MilliFiles {
         }
 
         @Override
-        public MilliCollection getParent() {
+        public final MilliCollection getParent() {
             return parent;
         }
 
         @Override
         @Nonnull
-        public File getFile() {
+        public final File getFile() {
             return file;
         }
 
         @Override
-        public boolean isMilliNone() {
+        public final boolean isMilliNone() {
             return this instanceof MilliNone;
         }
 
         @Override
-        public boolean isMilliDocument() {
+        public final boolean isMilliDocument() {
             return this instanceof MilliDocument;
         }
 
         @Override
-        public boolean isMilliCollection() {
+        public final boolean isMilliCollection() {
             return this instanceof MilliCollection;
         }
 
@@ -109,7 +109,7 @@ public final class MilliFiles {
         }
 
         @Override
-        public void delete() {
+        public final void delete() {
             FileUtility.deleteIfExists(file);
         }
     }
