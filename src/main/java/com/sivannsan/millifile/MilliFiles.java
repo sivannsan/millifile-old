@@ -1,5 +1,6 @@
 package com.sivannsan.millifile;
 
+import com.sivannsan.foundation.Ensure;
 import com.sivannsan.foundation.annotation.Nonnull;
 import com.sivannsan.foundation.utility.FileUtility;
 import com.sivannsan.foundation.Validate;
@@ -79,6 +80,11 @@ public final class MilliFiles {
         }
 
         @Override
+        public boolean isMilliNone() {
+            return this instanceof MilliNone;
+        }
+
+        @Override
         public boolean isMilliDocument() {
             return this instanceof MilliDocument;
         }
@@ -104,7 +110,13 @@ public final class MilliFiles {
 
         @Override
         public void delete() {
-            FileUtility.delete(file);
+            FileUtility.deleteIfExists(file);
+        }
+    }
+
+    private static final class IMilliNone extends IMilliFile implements MilliNone {
+        private IMilliNone(MilliCollection parent, @Nonnull File file) {
+            super(parent, file);
         }
     }
 
@@ -154,53 +166,53 @@ public final class MilliFiles {
             super(parent, file);
         }
 
-        /**
-         * Get all MilliDatabases from files that are compatible with MilliDatabase
-         */
         @Override
-        @Nonnull
-        public List<MilliFile> getFiles() {
-            List<MilliFile> list = new ArrayList<>();
-            for (File f : file.listFiles()) {
-                if (f.isDirectory()) list.add(new IMilliCollection(this, f));
-                else if (f.getName().endsWith(".mll")) list.add(new IMilliDocument(this, f));
+        public void createIfNotExists(@Nonnull String name) {
+            File newFile = new File(file, name);
+            if (name.endsWith(".mll")) {
+                if (newFile.isDirectory()) {
+                    FileUtility.deleteIfExists(newFile);
+                }
+                if (!newFile.exists()) {
+                    FileUtility.createFile(newFile);
+                    FileUtility.write(newFile, MilliNull.INSTANCE.toString());
+                }
+            } else {
+                if (newFile.isFile()) {
+                    FileUtility.deleteIfExists(newFile);
+                }
+                if (!newFile.exists()) {
+                    FileUtility.createDirectory(newFile);
+                }
             }
-            return list;
         }
 
         @Override
-        @Nonnull
-        public MilliDocument getDocument(@Nonnull String name) {
-            if (!name.endsWith(".mll")) throw new IllegalArgumentException("A MilliDocument name must end with .mll extension!");
+        public MilliFile get(@Nonnull String name) {
             File newFile = new File(file, name);
-            if (newFile.isDirectory()) {
-                FileUtility.delete(newFile);
-            }
             if (!newFile.exists()) {
-                FileUtility.createFile(newFile);
-                FileUtility.write(newFile, MilliNull.INSTANCE.toString());
+                return new IMilliNone(this, newFile);
+            } else if (name.endsWith(".mll")) {
+                if (newFile.isDirectory()) {
+                    throw new RuntimeException("A file ends with .mll extension is a directory instead of a file!");
+                }
+                return new IMilliDocument(this, newFile);
+            } else {
+                if (newFile.isFile()) {
+                    throw new RuntimeException("A file ends without .mll extension is a file instead of a directory!");
+                }
+                return new IMilliCollection(this, newFile);
             }
-            return new IMilliDocument(this, newFile);
-        }
-
-        @Override
-        @Nonnull
-        public MilliCollection getCollection(@Nonnull String name) {
-            if (name.endsWith(".mll")) throw new IllegalArgumentException("A MilliDocument name must NOT end with .mll extension!");
-            File newFile = new File(file, name);
-            if (newFile.isFile()) {
-                FileUtility.delete(newFile);
-            }
-            if (!newFile.exists()) {
-                FileUtility.createDirectory(newFile);
-            }
-            return new IMilliCollection(this, newFile);
         }
 
         @Override
         @Nonnull
         public Iterator<MilliFile> iterator() {
-            return getFiles().iterator();
+            List<MilliFile> children = new ArrayList<>();
+            for (String f : Ensure.ifNull(file.list(), new String[]{})) {
+                children.add(get(f));
+            }
+            return children.iterator();
         }
     }
 }

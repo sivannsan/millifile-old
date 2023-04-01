@@ -10,20 +10,14 @@ import java.util.List;
  */
 public interface MilliCollection extends MilliFile, Iterable<MilliFile> {
     /**
-     * Get all MilliFiles from files that are compatible with MilliFile
+     * @param name  with .mll extension for MilliDocument; without .mll extension for MilliCollection
      */
-    @Nonnull
-    List<MilliFile> getFiles();
+    void createIfNotExists(@Nonnull String name);
 
     /**
-     * Get and automatically create if the MilliDocument does not exist
+     * @param name  with .mll extension for MilliDocument; without .mll extension for MilliCollection
+     * @return  MilliNone if the file does not exist
      */
     @Nonnull
-    MilliDocument getDocument(@Nonnull String name);
-
-    /**
-     * Get and automatically create if the MilliCollection does not exist
-     */
-    @Nonnull
-    MilliCollection getCollection(@Nonnull String name);
+    MilliFile get(@Nonnull String name);
 }

@@ -17,6 +17,8 @@ public interface MilliFile {
     @Nonnull
     File getFile();
 
+    boolean isMilliNone();
+
     boolean isMilliDocument();
 
     boolean isMilliCollection();
@@ -27,5 +29,8 @@ public interface MilliFile {
     @Nonnull
     MilliCollection asMilliCollection() throws ClassCastException;
 
+    /**
+     * Deletion is not available for MilliNone
+     */
     void delete();
 }
