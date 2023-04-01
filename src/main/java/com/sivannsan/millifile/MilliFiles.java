@@ -194,12 +194,12 @@ public final class MilliFiles {
                 return new IMilliNone(this, newFile);
             } else if (name.endsWith(".mll")) {
                 if (newFile.isDirectory()) {
-                    throw new RuntimeException("A file ends with .mll extension is a directory instead of a file!");
+                    return new IMilliNone(this, newFile);
                 }
                 return new IMilliDocument(this, newFile);
             } else {
                 if (newFile.isFile()) {
-                    throw new RuntimeException("A file ends without .mll extension is a file instead of a directory!");
+                    return new IMilliNone(this, newFile);
                 }
                 return new IMilliCollection(this, newFile);
             }
