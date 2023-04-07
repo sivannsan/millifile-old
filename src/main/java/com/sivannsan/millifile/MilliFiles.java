@@ -1,18 +1,16 @@
 package com.sivannsan.millifile;
 
 import com.sivannsan.foundation.Ensure;
+import com.sivannsan.foundation.Validate;
+import com.sivannsan.foundation.annotation.Nonnegative;
 import com.sivannsan.foundation.annotation.Nonnull;
 import com.sivannsan.foundation.utility.FileUtility;
-import com.sivannsan.foundation.Validate;
 import com.sivannsan.millidata.MilliData;
 import com.sivannsan.millidata.MilliDataParseException;
 import com.sivannsan.millidata.MilliNull;
 
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
 
@@ -24,37 +22,26 @@ public final class MilliFiles {
     }
 
     /**
-     * Load and also create if it does not exist.
      * The loaded MilliFile is considered as root.
      */
     @Nonnull
-    public static MilliFile load(@Nonnull String filename) throws MilliFileLoadException {
-        return load(new File(filename));
+    public static MilliFile load(@Nonnull String pathname) {
+        return load(new File(pathname));
     }
 
     /**
-     * Load and also create if it does not exist.
      * The loaded MilliFile is considered as root.
      */
     @Nonnull
-    public static MilliFile load(@Nonnull File file) throws MilliFileLoadException {
+    public static MilliFile load(@Nonnull File file) {
         if (!file.exists()) {
-            //TODO: If not exist yet, we can not know it is a directory or not
-            if (file.isDirectory()) {
-                if (file.getName().endsWith(".mll")) throw new MilliFileLoadException("A MilliCollection filename must NOT end with .mll!");
-                file.mkdirs();
-            } else {
-                if (!file.getName().endsWith(".mll")) throw new MilliFileLoadException("A MilliDocument filename must end with .mll extension!");
-                FileUtility.createFile(file);
-                FileUtility.write(file, MilliNull.INSTANCE.toString());
-            }
-        }
-        if (file.isDirectory()) {
-            if (file.getName().endsWith(".mll")) throw new MilliFileLoadException("A MilliCollection filename must NOT end with .mll!");
+            return new IMilliNone(null, file);
+        } else if (file.isFile()) {
+            return new IMilliDocument(null, file);
+        } else if (file.isDirectory()) {
             return new IMilliCollection(null, file);
         } else {
-            if (!file.getName().endsWith(".mll")) throw new MilliFileLoadException("A MilliDocument filename must end with .mll extension!");
-            return new IMilliDocument(null, file);
+            throw new IllegalStateException("Unexpected error while loading a MilliFile!");
         }
     }
 
@@ -128,8 +115,7 @@ public final class MilliFiles {
         @Override
         @Nonnull
         public MilliData getContent() throws MilliDataParseException {
-            Validate.nonnull(file);
-            if (!file.exists()) return MilliNull.INSTANCE;
+            if (!file.exists()) throw new IllegalStateException("The file does not exists!");
             StringBuilder sb = new StringBuilder();
             try {
                 Scanner scanner = new Scanner(file);
@@ -147,17 +133,9 @@ public final class MilliFiles {
         }
 
         @Override
-        public void setContent(@Nonnull MilliData value, int indent) {
-            try {
-                String content = Validate.nonnull(value).toString(indent);
-                Validate.nonnull(file);
-                if (!file.exists() && !file.createNewFile()) return;
-                FileWriter writer = new FileWriter(file);
-                writer.write(content);
-                writer.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        public void setContent(@Nonnull MilliData value, @Nonnegative int indent) {
+            if (!file.exists()) throw new IllegalStateException("The file does not exists!");
+            FileUtility.write(file, Validate.nonnull(value).toString(Validate.nonnegative(indent)));
         }
     }
 
@@ -167,52 +145,59 @@ public final class MilliFiles {
         }
 
         @Override
-        public void createIfNotExists(@Nonnull String name) {
-            File newFile = new File(file, name);
-            if (name.endsWith(".mll")) {
-                if (newFile.isDirectory()) {
-                    FileUtility.deleteIfExists(newFile);
-                }
-                if (!newFile.exists()) {
-                    FileUtility.createFile(newFile);
-                    FileUtility.write(newFile, MilliNull.INSTANCE.toString());
-                }
-            } else {
-                if (newFile.isFile()) {
-                    FileUtility.deleteIfExists(newFile);
-                }
-                if (!newFile.exists()) {
-                    FileUtility.createDirectory(newFile);
+        @Nonnull
+        public List<MilliFile> list() {
+            List<MilliFile> files = new ArrayList<>();
+            for (File child : Ensure.ifNull(file.listFiles(), new File[]{})) {
+                if (child.isFile()) {
+                    files.add(new IMilliDocument(this, child));
+                } else if (child.isDirectory()) {
+                    files.add(new IMilliCollection(this, child));
+                } else {
+                    throw new IllegalStateException("Unexpected error while listing children MilliFiles!");
                 }
             }
-        }
-
-        @Override
-        public MilliFile get(@Nonnull String name) {
-            File newFile = new File(file, name);
-            if (!newFile.exists()) {
-                return new IMilliNone(this, newFile);
-            } else if (name.endsWith(".mll")) {
-                if (newFile.isDirectory()) {
-                    return new IMilliNone(this, newFile);
-                }
-                return new IMilliDocument(this, newFile);
-            } else {
-                if (newFile.isFile()) {
-                    return new IMilliNone(this, newFile);
-                }
-                return new IMilliCollection(this, newFile);
-            }
+            return files;
         }
 
         @Override
         @Nonnull
-        public Iterator<MilliFile> iterator() {
-            List<MilliFile> children = new ArrayList<>();
-            for (String f : Ensure.ifNull(file.list(), new String[]{})) {
-                children.add(get(f));
+        public MilliFile get(@Nonnull String name) {
+            File child = new File(file, Validate.nonnull(name));
+            if (!child.exists()) {
+                return new IMilliNone(this, child);
+            } else if (child.isFile()) {
+                return new IMilliDocument(this, child);
+            } else if (child.isDirectory()) {
+                return new IMilliCollection(this, child);
+            } else {
+                throw new IllegalStateException("Unexpected error while getting a child MilliFile!");
             }
-            return children.iterator();
+        }
+
+        @Override
+        public void create(@Nonnull String name, @Nonnull Class<? extends MilliFile> type, boolean force) {
+            if (Validate.nonnull(name).equals("")) return;
+            if (Validate.nonnull(type) == MilliNone.class) return;
+            if (type == MilliDocument.class) {
+                File child = new File(file, name);
+                if (!child.exists()) FileUtility.createFile(child);
+                if (child.isFile()) return;
+                if (force) {
+                    FileUtility.deleteIfExists(child);
+                    FileUtility.createFile(child);
+                    FileUtility.write(child, MilliNull.INSTANCE.toString());
+                }
+            }
+            if (type == MilliCollection.class) {
+                File child = new File(file, name);
+                if (!child.exists()) FileUtility.createDirectory(child);
+                if (child.isDirectory()) return;
+                if (force) {
+                    FileUtility.deleteIfExists(child);
+                    FileUtility.createDirectory(child);
+                }
+            }
         }
     }
 }

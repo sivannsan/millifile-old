@@ -4,13 +4,9 @@ import com.sivannsan.foundation.annotation.Nonnull;
 
 import java.io.File;
 
-/**
- * The instance of this class does not in-memory work with the data.
- * It always communicates with the storage.
- */
 public interface MilliFile {
     /**
-     * @return  null if this MilliDatabase is root
+     * @return  null if this MilliFile is root
      */
     MilliCollection getParent();
 
@@ -30,7 +26,7 @@ public interface MilliFile {
     MilliCollection asMilliCollection() throws ClassCastException;
 
     /**
-     * Deletion is not available for MilliNone
+     * Deletion is not available (ignored) for MilliNone
      */
     void delete();
 }
