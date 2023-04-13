@@ -1,7 +1,7 @@
 package com.sivannsan.millifile;
 
-import com.sivannsan.foundation.Ensure;
-import com.sivannsan.foundation.Validate;
+import com.sivannsan.foundation.common.Ensure;
+import com.sivannsan.foundation.common.Validate;
 import com.sivannsan.foundation.annotation.Nonnegative;
 import com.sivannsan.foundation.annotation.Nonnull;
 import com.sivannsan.foundation.utility.FileUtility;
@@ -17,6 +17,7 @@ import java.util.Scanner;
 /**
  * TODO: Rule for filename
  */
+@SuppressWarnings("unused")
 public final class MilliFiles {
     private MilliFiles() {
     }
@@ -97,7 +98,7 @@ public final class MilliFiles {
 
         @Override
         public final void delete() {
-            FileUtility.deleteIfExists(file);
+            FileUtility.delete(file);
         }
     }
 
@@ -135,7 +136,7 @@ public final class MilliFiles {
         @Override
         public void setContent(@Nonnull MilliData value, @Nonnegative int indent) {
             if (!file.exists()) throw new IllegalStateException("The file does not exists!");
-            FileUtility.write(file, Validate.nonnull(value).toString(Validate.nonnegative(indent)));
+            FileUtility.writeLines(file, Validate.nonnull(value).toString(Validate.nonnegative(indent)));
         }
     }
 
@@ -184,9 +185,9 @@ public final class MilliFiles {
                 if (!child.exists()) FileUtility.createFile(child);
                 if (child.isFile()) return;
                 if (force) {
-                    FileUtility.deleteIfExists(child);
+                    FileUtility.delete(child);
                     FileUtility.createFile(child);
-                    FileUtility.write(child, MilliNull.INSTANCE.toString());
+                    FileUtility.writeLines(child, MilliNull.INSTANCE.toString());
                 }
             }
             if (type == MilliCollection.class) {
@@ -194,7 +195,7 @@ public final class MilliFiles {
                 if (!child.exists()) FileUtility.createDirectory(child);
                 if (child.isDirectory()) return;
                 if (force) {
-                    FileUtility.deleteIfExists(child);
+                    FileUtility.delete(child);
                     FileUtility.createDirectory(child);
                 }
             }

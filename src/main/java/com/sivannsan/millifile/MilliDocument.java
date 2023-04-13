@@ -5,6 +5,7 @@ import com.sivannsan.foundation.annotation.Nonnull;
 import com.sivannsan.millidata.MilliData;
 import com.sivannsan.millidata.MilliDataParseException;
 
+@SuppressWarnings("unused")
 public interface MilliDocument extends MilliFile {
     @Nonnull
     MilliData getContent() throws MilliDataParseException;

@@ -4,6 +4,7 @@ import com.sivannsan.foundation.annotation.Nonnull;
 
 import java.io.File;
 
+@SuppressWarnings("unused")
 public interface MilliFile {
     /**
      * @return  null if this MilliFile is root
