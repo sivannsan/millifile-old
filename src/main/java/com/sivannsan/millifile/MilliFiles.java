@@ -46,6 +46,27 @@ public final class MilliFiles {
         }
     }
 
+    /**
+     * @param file  the conventional name for MilliDocument ends with the .mll extension
+     * @param type  MilliDocument.class or MilliCollection.class; MilliNone will be ignored the creation
+     * @param force if false, it won't create if the provided file already exists; if true, it will delete the old and create a new if the type is different
+     */
+    public static void create(@Nonnull File file, @Nonnull Class<? extends MilliFile> type, boolean force) {
+        if (Validate.nonnull(type) == MilliNone.class) return;
+        if (Validate.nonnull(file).exists() && !force) return;
+        if (type == MilliDocument.class) {
+            if (file.isFile()) return;
+            FileUtility.delete(file);
+            FileUtility.createFile(file);
+            FileUtility.writeLines(file, MilliNull.INSTANCE.toString());
+        }
+        if (type == MilliCollection.class) {
+            if (file.isDirectory()) return;
+            FileUtility.delete(file);
+            FileUtility.createDirectory(file);
+        }
+    }
+
     private static abstract class IMilliFile implements MilliFile {
         protected final MilliCollection parent;
         @Nonnull
